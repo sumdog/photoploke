@@ -1,0 +1,40 @@
+@(photoForm: Form[Photo])
+@import helper._
+
+@main("Empty String") {
+
+
+  <script src='@routes.Assets.at("javascripts/files.js")'></script>
+
+  <ul id="photos">
+  </ul>
+
+  <div id="fileUploader">
+  </div>
+
+  @helper.form(action = routes.Administration.uploadPhoto) {
+
+
+    @if(photoForm.hasErrors) {
+    <div class="alert-message error">
+        <p><strong>Oops</strong> Please fix all errors</p>
+    </div>
+    }
+
+      <fieldset>
+      <legend>General informations</legend>
+
+        @inputText(
+        photoForm("name"),
+        '_label -> "Name"
+        )
+        
+
+      </fieldset>
+
+<div class="actions">
+    <input type="submit" class="btn primary" value="Insert">
+</div>
+
+  }
+}
