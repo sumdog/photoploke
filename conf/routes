@@ -14,7 +14,14 @@ POST    /admin/photos/upload        controllers.Photo.upload
 GET     /admin/photos/new           controllers.Photo.uninitialized
 PUT     /admin/photos/:objectId     controllers.Photo.updateMetaData(objectId : String) 
 GET     /admin/photos/editAjax/:objectId  controllers.Photo.editFormAjax(objectId: String)
+GET     /admin/photo/original/:objectId   controllers.Photo.getOriginalPhoto(objectId: String)
 
 #Photo Functions (Public)
 GET     /photos/tagsJson            controllers.Photo.getTagsJson(objectId: String)
-GET     /photo/:objectId/:width     controllers.Photo.getPhoto(objectId: String, width : Int)
+GET     /photo/:objectId/:width     controllers.Photo.getPhotoResizedWatermarked(objectId: String, width : Int)
+
+
+#Settings (Admin)
+GET     /admin/settings             controllers.Settings.index
+GET     /admin/settings/photoAjax   controllers.Settings.photoFormAjax
+POST    /admin/settings/photoAjax   controllers.Settings.photoAjax

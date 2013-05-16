@@ -1,13 +1,8 @@
 package util
 
-import java.awt.{Color, RenderingHints, Image}
-import org.imgscalr.Scalr
 import java.awt.image.BufferedImage
 import com.kitfox.svg.SVGUniverse
-import java.io.{FileInputStream, ByteArrayInputStream, File}
-import java.net.URI
-import org.apache.batik.transcoder.image.{PNGTranscoder, ImageTranscoder}
-import org.apache.batik.transcoder.{TranscodingHints, TranscoderInput, TranscoderOutput}
+import java.io.ByteArrayInputStream
 
 object WaterMarkLocation extends Enumeration {
   type WaterMarkLocation = Value
@@ -31,7 +26,9 @@ object ImageTool {
           map + {
 
             //only resize based on width and keep proportions
+            //TODO: setting: resize on Width, Height, Auto (Default)
             val resized = if(width != original.getWidth) {
+              //TODO: Settings? PROGRESS_BILINEAR as default
               Resizer.PROGRESSIVE_BILINEAR.resize(original,width,
                 (width * original.getHeight)  / original.getWidth
               )

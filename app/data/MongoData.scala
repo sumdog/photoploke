@@ -1,5 +1,6 @@
 package data
 
+import _root_.util.{WaterMarkLocation, WaterMark, ImageTool, Constants}
 import com.mongodb.casbah._
 import com.mongodb.casbah.gridfs.GridFS
 import play.Logger
@@ -7,12 +8,12 @@ import java.net.UnknownHostException
 import play.api.mvc.MultipartFormData.FilePart
 import org.bson.types.ObjectId
 import com.mongodb.casbah.gridfs.GridFSDBFile
-import java.io.ByteArrayOutputStream
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File}
 import com.mongodb.casbah.commons.MongoDBObject
 import play.Application
 import play.Application
 import models.Photo
-import java.io.File
+import javax.imageio.ImageIO
 
 object MongoData {
   private var client : MongoClient = _
@@ -54,6 +55,8 @@ class MongoData extends DataTrait {
    * original name of uploaded photo. 
    */  
   val NAME = "name"
+
+  val SIZES = "sizes"
   
   override def retrievePhoto(objectId : String, width : Option[Int]) : Option[Photo] = {
     
@@ -66,15 +69,20 @@ class MongoData extends DataTrait {
       
       val photoInfo = photo.next
 
-      MongoData.gridfs.findOne( new File(DOC_PHOTOS,photoInfo.get(NAME).toString()).toString() ) match {
+      val file = width match {
+        case Some(x : Int) => { new File(new File(DOC_PHOTOS,objectId.toString),x.toString) }
+        case None => new File(DOC_PHOTOS,objectId.toString)
+      }
+
+      MongoData.gridfs.findOne( file.toString ) match {
         case Some(fs : GridFSDBFile) => {
           val out = new ByteArrayOutputStream()
           fs.writeTo(out)
-          
+
           Some( 
               Photo(
                 out.toByteArray(), 
-                fs.contentType.getOrElse("application/octet-stream"),
+                fs.contentType.getOrElse(Constants.UNKNOWN_MIME_TYPE),
                 photoInfo.get(NAME).toString()
               ) 
           )
@@ -87,14 +95,49 @@ class MongoData extends DataTrait {
   }
   
   override def savePhoto(photo : Photo) : String = {
-      val objectId = new ObjectId()
-      val obj = MongoDBObject( NAME -> photo.fileName , ID -> objectId )
-      MongoData.db(DOC_PHOTOS) += obj
-      MongoData.gridfs(photo.data) { fh =>
-        fh.filename = new File(DOC_PHOTOS,photo.fileName).toString()
-        fh.contentType = photo.contentType   
+
+    //unique ID for Image
+    val objectId = new ObjectId()
+
+    //save original
+    MongoData.gridfs(photo.data) { fh =>
+      fh.filename = new File(DOC_PHOTOS,objectId.toString).toString()
+      fh.contentType = photo.contentType
+    }
+
+    //TODO: configurable
+    val sizes = List( 4096 , 2048, 1024, 800, 640, 100, 50 )
+
+    //TODO: use configurable
+    val images = ImageTool.processPhotos(ImageIO.read(new ByteArrayInputStream(photo.data)),sizes,
+      Some(WaterMark(
+        scala.io.Source.fromFile(new File("/home/cassius/workspace/photoploke/journeyofkhan-watermark.svg")).map(_.toByte).toArray,
+        0.30,
+        WaterMarkLocation.TOP_CENTRE,
+        10,10
+      ))
+    )
+
+    //save reiszed/watermarked versions (includes watermarked version of original size)
+    images.foreach {
+      case(width,image) => {
+
+        val out = new ByteArrayOutputStream()
+        //TODO: setting (default JPEG)
+        ImageIO.write(image,"jpg",out)
+
+        MongoData.gridfs(out.toByteArray) { fh =>
+          fh.filename =  new File(new File(DOC_PHOTOS,objectId.toString),width.toString()).toString
+          fh.contentType = "image/jpeg"
+        }
       }
-      objectId.toString()
+    }
+
+    //save metadata
+    val obj = MongoDBObject( NAME -> photo.fileName , ID -> objectId , SIZES -> images.keys.toList )
+    MongoData.db(DOC_PHOTOS) += obj
+
+    objectId.toString()
   }
   
 }

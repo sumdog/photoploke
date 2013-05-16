@@ -1,0 +1,14 @@
+@import helper._
+@(settings : PhotoSettings)
+
+<fieldset>
+    <legend>@Messages("photo.settings")</legend>
+
+  @inputText(
+    settings("resizeResolution"),
+    '_label -> "Photo Sizes"
+  )
+
+
+</fieldset>
+

@@ -11,7 +11,9 @@ object ApplicationBuild extends Build {
     // Add your project dependencies here,
     jdbc,
     anorm,
-    "org.mongodb" %% "casbah" % "2.5.0"
+    "org.mongodb" %% "casbah" % "2.5.0",
+    "com.kitfox.svg" % "svg-salamander" % "1.0",
+    "batik" % "batik-transcoder" % "1.6-1"
   )
 
 

@@ -1,9 +1,12 @@
 @import helper._
 
-@main("Upload Photos") {
+@main(Messages("photos.upload")) {
 
 
   <script src='@routes.Assets.at("javascripts/photo/uploadForm.js")'></script>
+
+  <ul id="photos">
+  </ul>
 
   <div id="fileUploader">
   </div>
